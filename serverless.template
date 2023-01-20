@@ -1,0 +1,126 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": "AWS::Serverless-2016-10-31",
+  "Parameters": {
+    "HtmlBucketName": {
+      "Type": "String",
+      "Description": "Name of S3 bucket for storing the HTML files.",
+      "MinLength": "0"
+    },
+    "SongBucketName": {
+      "Type": "String",
+      "Description": "Name of S3 bucket for storing the Lyrics files.",
+      "MinLength": "0"
+    }
+  },
+  "Globals": {
+    "Function": {
+      "Environment": {
+        "Variables": {
+          "HTML_BUCKET_NAME": {
+            "Ref": "HtmlBucketName"
+          },
+          "SONG_BUCKET_NAME": {
+            "Ref": "SongBucketName"
+          },
+          "PUBLIC_WEBSITE_URL": {
+            "Fn::GetAtt": [
+              "HtmlBucket",
+              "WebsiteURL"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "Resources": {
+    "SongBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Ref": "SongBucketName"
+        }
+      }
+    },
+    "HtmlBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Ref": "HtmlBucketName"
+        },
+        "AccessControl": "PublicRead",
+        "WebsiteConfiguration": {
+          "IndexDocument": "index.html"
+        }
+      }
+    },
+    "S3Function": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::GenerateHtmlPage",
+        "Runtime": "dotnet6",
+        "CodeUri": "",
+        "Description": "Renders the HTML for a song page and saves to S3",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": null,
+        "Policies": [
+          "AWSLambda_FullAccess",
+          "AmazonS3FullAccess"
+        ],
+        "Events": {
+          "NewImagesBucket": {
+            "Type": "S3",
+            "Properties": {
+              "Bucket": {
+                "Ref": "SongBucket"
+              },
+              "Events": [
+                "s3:ObjectCreated:*"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "HtmlBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "HtmlBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2008-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Sub": [
+                  "arn:aws:s3:::${Bucket}/*",
+                  {
+                    "Bucket": {
+                      "Ref": "HtmlBucketName"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "WebsiteURL": {
+      "Value": {
+        "Fn::GetAtt": [
+          "HtmlBucket",
+          "WebsiteURL"
+        ]
+      },
+      "Description": "URL for hosted static website"
+    }
+  }
+}
