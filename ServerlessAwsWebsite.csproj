@@ -11,6 +11,11 @@
     <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="demonstration-aws-explorer-s3.png" />
+    <None Remove="demonstration-aws-explorer.png" />
+    <None Remove="demonstration-data-buckets.png" />
+    <None Remove="demonstration-deployment-bucket.png" />
+    <None Remove="demonstration-publish-context-menu.png" />
     <None Remove="song.html" />
   </ItemGroup>
   <ItemGroup>

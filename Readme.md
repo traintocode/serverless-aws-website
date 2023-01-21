@@ -1,44 +1,67 @@
-# AWS Lambda Simple S3 Function Project
+# Serverless C# on AWS Example
 
-This starter project consists of:
-* serverless.template - an AWS CloudFormation Serverless Application Model template file for declaring your Serverless functions and other AWS resources
-* Function.cs - class file containing a class with a single function handler method
-* aws-lambda-tools-defaults.json - default argument settings for use with Visual Studio and command line deployment tools for AWS
+Example website for a band called the See Sharps, built with C# on AWS.
 
-You may also have a test project depending on the options selected.
+## Setup & Prerequisites
 
-The generated function handler responds to events on an Amazon S3 bucket. The handler receives the bucket and object key details in an S3Event instance and returns the content type of the object as the function output. Replace the body of this method, and parameters, to suit your needs.
+1. Register an account with AWS if you don't have one
+2. Download and install the [AWS Toolkit for Visual Studio](https://marketplace.visualstudio.com/items?itemName=AmazonWebServices.AWSToolkitforVisualStudio2022)
+3. Obtain AWS access keys: [guide here](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/keys-profiles-credentials.html).
+4. Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln) in Visual Studio and choose _View > AWS Explorer_ from the menu.
+5. You should be able to select a region and browse your AWS resources in the AWS Explorer window.  We will go over some of the features of the AWS Explorer at the start of this workshop
 
-After deploying your function you must configure an Amazon S3 bucket as an event source to trigger your Lambda function.
+![](./demonstration-aws-explorer.png)
 
-## Here are some steps to follow from Visual Studio:
+## Switching Branches
 
-To deploy your Serverless application, right click the project in Solution Explorer and select *Publish to AWS Lambda*.
+There are three branches in this repository, each one represents an increasingly complex version of this serverless application.  All the infrastructure needed to run the application is configured in the [./serverless.template](./serverless.template) [SAM](https://aws.amazon.com/serverless/sam/) template. You deploy a version by checking out the relevant branch, right-clicking on the project name and selecting "Publish to AWS...".
 
-To view your deployed application open the Stack View window by double-clicking the stack name shown beneath the AWS CloudFormation node in the AWS Explorer tree. The Stack View also displays the root URL to your published application.
 
-## Here are some steps to follow to get started from the command line:
 
-Once you have edited your template and code you can deploy your application using the [Amazon.Lambda.Tools Global Tool](https://github.com/aws/aws-extensions-for-dotnet-cli#aws-lambda-amazonlambdatools) from the command line.
+## >>> This is Stage 1 <<<
 
-Install Amazon.Lambda.Tools Global Tools if not already installed.
+This stage creates an AWS Lambda function that renders some song lyrics into an HTML web page, then saves it to a publicly facing S3 bucket.  To deploy this stage to your AWS account:
+
+### 1. First off, run this git command:
+```sh
+git update-index --skip-worktree aws-lambda-tools-defaults.json
 ```
-    dotnet tool install -g Amazon.Lambda.Tools
-```
+This will allow you to make local changes to the [./aws-lambda-tools-defaults.json](./aws-lambda-tools-defaults.json) file that will persist when you switch branches later on.
 
-If already installed check if new version is available.
-```
-    dotnet tool update -g Amazon.Lambda.Tools
-```
+### 2. Open the solution
+Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln)
 
-Execute unit tests
-```
-    cd "ServerlessAwsWebsite/test/ServerlessAwsWebsite.Tests"
-    dotnet test
-```
+### 3. Start the Publish Wizard
+Right click the project name in Visual Studio and select "Publish to AWS Lambda..."
 
-Deploy function to AWS Lambda
-```
-    cd "ServerlessAwsWebsite/src/ServerlessAwsWebsite"
-    dotnet lambda deploy-serverless
-```
+![](./demonstration-publish-context-menu.png)
+
+### 4. Create a deployments bucket
+
+This is an S3 bucket that the deployment tool will use to store your compiled code.  You should select "New..." and enter a unique name for your deployments bucket.  Ensure _Save settings to aws-lambda-tools-defaults.json_ is checked.
+![](./demonstration-deployment-bucket.png)
+
+### 5. Enter names for your object buckets
+
+All S3 buckets in AWS need to have [globally unique names](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html), so enter names for the two S3 buckets you will be using for your application.  This can be anything you like.
+
+![](./demonstration-data-buckets.png)
+
+### 6. Click Publish!
+
+When the wizard completes it will open a CloudFromation window that displays the status of your deployment.
+
+### 7. See your new S3 Buckets in the AWS Explorer
+
+Open the AWS Explorer window (_View > AWS Explorer_) and expand the **Amazon S3** node to see the new S3 buckets you defined in step 5.
+
+![](./demonstration-aws-explorer-s3.png)
+
+### 8. Test it out!
+
+a) Upload one of the lyrics files from the [./sample-lyrics] in this repository into whichever bucket you created for `SongBucketName`.
+
+b) Expand the **AWS Lambda** node in the AWS Explorer tree and find your new lambda function.  It will have a name beginning with `ServerlessAwsWebsite-RenderHtml....`
+
+c) Check the _Logs_ tab of your lambda function to see if it executed!
+

@@ -54,22 +54,19 @@
         }
       }
     },
-    "S3Function": {
+    "RenderHtmlFunction": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
-        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::GenerateHtmlPage",
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::RenderHtml",
         "Runtime": "dotnet6",
-        "CodeUri": "",
-        "Description": "Renders the HTML for a song page and saves to S3",
         "MemorySize": 256,
         "Timeout": 30,
-        "Role": null,
         "Policies": [
           "AWSLambda_FullAccess",
           "AmazonS3FullAccess"
         ],
         "Events": {
-          "NewImagesBucket": {
+          "NewSongInBucket": {
             "Type": "S3",
             "Properties": {
               "Bucket": {
@@ -99,6 +96,21 @@
               "Resource": {
                 "Fn::Sub": [
                   "arn:aws:s3:::${Bucket}/*",
+                  {
+                    "Bucket": {
+                      "Ref": "HtmlBucketName"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:ListBucket",
+              "Resource": {
+                "Fn::Sub": [
+                  "arn:aws:s3:::${Bucket}",
                   {
                     "Bucket": {
                       "Ref": "HtmlBucketName"

@@ -31,10 +31,11 @@ public class LambdaFunctions
     /// <summary>
     /// The entry point to the AWS Lambda function (set in serverless.template)
     /// </summary>
-    public async Task<string> GenerateHtmlPage(S3Event @event, ILambdaContext context)
+    public async Task<string> RenderHtml(S3Event @event, ILambdaContext context)
     {
         var s3Event = @event.Records?[0].S3 ?? throw new ArgumentException("No S3 event!");
         var objectKey = s3Event.Object.Key.Replace("+", " ");
+        var songTitle = objectKey.Replace(".txt", "", StringComparison.InvariantCultureIgnoreCase);
 
         // The event that triggered this lambda only contains the key, so go off and get the entire object...
         var s3GetResponse = await _s3Client.GetObjectAsync(new GetObjectRequest
@@ -51,10 +52,10 @@ public class LambdaFunctions
         var template = Template.Parse(await File.ReadAllTextAsync("song.html"));
 
         // Render our (static) html page for this song
-        var songPageHtml = template.Render(new { Lyrics = objectContentString });
+        var songPageHtml = template.Render(new { Lyrics = objectContentString, Title = songTitle });
 
         // Save the rendered html page to the publicly facing html bucket
-        var htmlObjectKey = "Song/" + objectKey.Replace(".txt", "", StringComparison.InvariantCultureIgnoreCase);
+        var htmlObjectKey = "Song/" + songTitle;
         await _s3Client.PutObjectAsync(new PutObjectRequest
         {
             BucketName = envVars.HtmlBucketName,

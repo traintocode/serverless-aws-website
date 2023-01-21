@@ -1,0 +1,41 @@
+Verse 1:
+I used to worry 'bout my servers
+Scaling up and down, it was a real hassle
+But now I've found a new way
+To keep my app running all day
+
+Chorus:
+Serverless, serverless
+No more worries, no more stress
+I can focus on my code
+And let the cloud do the load
+
+Verse 2:
+No more managing instances
+No more worrying about persistence
+Just write your code and deploy
+And let the cloud take care of the rest
+
+Chorus:
+Serverless, serverless
+No more worries, no more stress
+I can focus on my code
+And let the cloud do the load
+
+Bridge:
+Scaling's a breeze, and costs are low
+Serverless is the way to go
+So join me in this revolution
+And make your life a little bit easier
+
+Chorus:
+Serverless, serverless
+No more worries, no more stress
+I can focus on my code
+And let the cloud do the load
+
+Outro:
+Serverless, serverless
+It's the future, it's progress
+Let's make the most of it
+And enjoy the benefits.
