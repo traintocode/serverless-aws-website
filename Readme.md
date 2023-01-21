@@ -10,7 +10,7 @@ Example website for a band called the See Sharps, built with C# on AWS.
 4. Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln) in Visual Studio and choose _View > AWS Explorer_ from the menu.
 5. You should be able to select a region and browse your AWS resources in the AWS Explorer window.  We will go over some of the features of the AWS Explorer at the start of this workshop
 
-![](./demonstration-aws-explorer.png)
+![](./guides/demonstration-aws-explorer.png)
 
 ## Switching Branches
 
@@ -34,18 +34,18 @@ Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln)
 ### 3. Start the Publish Wizard
 Right click the project name in Visual Studio and select "Publish to AWS Lambda..."
 
-![](./demonstration-publish-context-menu.png)
+![](./guides/demonstration-publish-context-menu.png)
 
 ### 4. Create a deployments bucket
 
 This is an S3 bucket that the deployment tool will use to store your compiled code.  You should select "New..." and enter a unique name for your deployments bucket.  Ensure _Save settings to aws-lambda-tools-defaults.json_ is checked.
-![](./demonstration-deployment-bucket.png)
+![](./guides/demonstration-deployment-bucket.png)
 
 ### 5. Enter names for your object buckets
 
 All S3 buckets in AWS need to have [globally unique names](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html), so enter names for the two S3 buckets you will be using for your application.  This can be anything you like.
 
-![](./demonstration-data-buckets.png)
+![](./guides/demonstration-data-buckets.png)
 
 ### 6. Click Publish!
 
@@ -55,7 +55,7 @@ When the wizard completes it will open a CloudFromation window that displays the
 
 Open the AWS Explorer window (_View > AWS Explorer_) and expand the **Amazon S3** node to see the new S3 buckets you defined in step 5.
 
-![](./demonstration-aws-explorer-s3.png)
+![](./guides/demonstration-aws-explorer-s3.png)
 
 ### 8. Test it out!
 
@@ -63,5 +63,18 @@ a) Upload one of the lyrics files from the [./sample-lyrics] in this repository 
 
 b) Expand the **AWS Lambda** node in the AWS Explorer tree and find your new lambda function.  It will have a name beginning with `ServerlessAwsWebsite-RenderHtml....`
 
-c) Check the _Logs_ tab of your lambda function to see if it executed!
+c) Check the _Logs_ tab of your lambda function to see if it executed
 
+![](./guides/testing-lambda-logs.png)
+
+d) The log message will have a public url you can visit to see the rendered HTML for your new page
+
+![](./guides/testing-public-html.png)
+
+## Troubleshooting
+
+#### Create failed because bucket name already exists?
+
+![](./guides/troubleshooting-bucket-exists.png)
+
+Bucket names in S3 are globally unique, so you need to change this name in the Publish Wizard (step 5 above)
