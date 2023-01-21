@@ -11,7 +11,6 @@
   "s3-prefix": "ServerlessAwsWebsite/",
   "template": "serverless.template",
   "template-parameters": "\"HtmlBucketName\"=\"<enter a unique bucket name here>\";\"SongBucketName\"=\"<enter a unique bucket name here>\"",
-  "template-substitutions": "$.Resources.StateMachine.Properties.DefinitionString.Fn::Sub=state-machine.json",
   "s3-bucket": "<enter a unique bucket name here>",
   "stack-name": "ServerlessAwsWebsite"
 }
