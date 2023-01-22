@@ -66,7 +66,6 @@
         "Runtime": "dotnet6",
         "MemorySize": 256,
         "Timeout": 30,
-        
         "Policies": [
           "AWSLambda_FullAccess",
           "AmazonS3FullAccess"
@@ -110,6 +109,39 @@
           "AWSLambda_FullAccess",
           "AmazonS3FullAccess"
         ]
+      }
+    },
+    "SaveSongFromApiFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::SaveSongFromApi",
+        "Runtime": "dotnet6",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": null,
+        "Policies": [
+          "AWSLambda_FullAccess",
+          "AmazonS3FullAccess"
+        ],
+        "Events": {
+          "ApiEvent": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/{songname}",
+              "Method": "POST",
+              "RestApiId": {
+                "Ref": "ApiGatewayApi"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ApiGatewayApi": {
+      "Type": "AWS::Serverless::Api",
+      "Properties": {
+        "StageName": "prod"
       }
     },
     "StateMachine": {
@@ -191,8 +223,8 @@
           ]
         },
         "ManagedPolicyArns": [
-            "arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess",
-            "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+          "arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess",
+          "arn:aws:iam::aws:policy/CloudWatchFullAccess"
         ],
         "Policies": [
           {

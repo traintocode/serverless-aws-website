@@ -2,25 +2,14 @@
 
 Example website for a band called the See Sharps, built with C# on AWS.
 
-## >>> This is Stage 2 <<<
+## >>> This is Stage 3 <<<
 
-To go back to stage 1 run `git switch stage-1`
+To go back to stage 2 run `git switch stage-2`
 
-Stage 2 creates an AWS Step Functions state machine that detects the language of the song lyrics, then renders them to HTML using a different template for French and English songs..  To deploy this stage to your AWS account:
-
-
-### 1. First off, add this line to your aws-lambda-tools-defaults.json file:
-
-```json
-"template-substitutions": "$.Resources.StateMachine.Properties.DefinitionString.Fn::Sub=state-machine.json",
-```
-
-![](./guides/demonstration-add-appsetting.png)
-
-This template substitution allows us to define the state engine in a separate JSON file called [./state-machine.json](./state-machine.json) and bundle it into the SAM template on publish.
+Stage 3 adds an API Gateway service to the front of our system so song lyrics can be sent over HTTP to the songs bucket.  It also adds another AWS Lambda function that is used to save the lyrics file..  To deploy this stage to your AWS account:
 
 
-### 2. Publish the solution
+### 1. Publish the solution
 
 Right click the project name in Visual Studio and select "Publish to AWS Lambda..."
 
@@ -28,29 +17,19 @@ Right click the project name in Visual Studio and select "Publish to AWS Lambda.
 
 
 
-### 3. Wait 5 minutes after deployment
+### 2. Grab the public url of the new API Gateway
 
-After the CloudFormation stack has finished updating we will need to wait around 5 minutes for the EventBridge connection to come alive.  This is the connection that links the S3 bucket to the state machine.
+You can use this url to POST lyrics files to your S3 bucket and kick off the state machine from stage 2.
 
-
-
-### 4. Test it out!
-
-a) Upload one of the lyrics files from the [./sample-lyrics](./sample-lyrics) folder in this repository into the songs bucket (the one you created for `SongBucketName`).  There is a French song in this folder called [Les Zebres Dans La Savane.txt](./sample-lyrics/Les%20Zebres%20Dans%20La%20Savane.txt), try this one.
-
-b) Open the AWS Step Functions management console at this link: [https://eu-west-2.console.aws.amazon.com/states/home](https://eu-west-2.console.aws.amazon.com/states/home) (NOTE: if your state engine does not show up you may need to change the region in the top right)
-
-![](./guides/demonstration-aws-region.png)
-
-e) Check that a new execution has happened and click it to explore the state machine path this execution took.
-
-f) Open the url for your web page.  The new song will appear in the list here:
-
-![](./guides/demonstration-added-new-page.png)
+![](./guides/demonstration-api-gateway.png)
 
 
-## Troubleshooting
+### 3. Test it out!
 
-#### The state engine does not start an execution when I upload a file to the song bucket?
+a) Send a POST request to your `<gateway-url>` from step 2 above.  Upload a text file as the body of the POST request.  The following `curl` command will do this from the command line:
 
-Just wait a bit longer.  You can read more about how the S3 bucket triggers the AWS Step Functions via EventBridge on this page: [Starting a State Machine Execution in Response to Amazon S3 Events](https://docs.aws.amazon.com/step-functions/latest/dg/tutorial-cloudwatch-events-s3.html)
+```sh
+curl -X POST https://<gateway-url>/prod/test --upload-file C:\Temp\textfile.txt
+```
+
+b) Go to your static website and see your new file appear as a new song!  You can also look at the execution logs of your state machine in AWS Step Functions in the [management console](https://eu-west-1.console.aws.amazon.com/states/home)

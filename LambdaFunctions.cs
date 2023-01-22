@@ -9,6 +9,7 @@ using System.Web;
 using System.Text.Json;
 using Amazon.Comprehend;
 using Amazon.Comprehend.Model;
+using Amazon.Lambda.APIGatewayEvents;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -108,6 +109,29 @@ public class LambdaFunctions
         return state;
 
     }
+
+    public async Task<APIGatewayProxyResponse> SaveSongFromApi(APIGatewayProxyRequest @event, ILambdaContext context)
+    {
+        var lyrics = @event.Body;
+        var songName = HttpUtility.UrlDecode(@event.PathParameters["songname"]);
+        context.Logger.LogInformation("Song name from url is: " + songName);
+
+        // Validate request...
+        if (string.IsNullOrWhiteSpace(lyrics))
+            return new APIGatewayProxyResponse { StatusCode = 400, Body = "Song lyrics missing form HTTP body" };
+
+        // Save the body text to the songs bucket
+        await _s3Client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = envVars.SongBucketName,
+            Key = songName,
+            ContentBody = lyrics
+        });
+
+        // Return an HTTP response
+        return new APIGatewayProxyResponse { StatusCode = 200 };
+    }
+
 
     public record SongHtmlViewModel(string Lyrics, string Title);
 
