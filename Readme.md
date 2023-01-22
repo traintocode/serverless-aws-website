@@ -2,34 +2,22 @@
 
 Example website for a band called the See Sharps, built with C# on AWS.
 
-## >>> This is Stage 3 <<<
+## Setup & Prerequisites
 
-To go back to stage 2 run `git switch stage-2`
+1. Register an account with AWS if you don't have one
+2. Download and install the [AWS Toolkit for Visual Studio](https://marketplace.visualstudio.com/items?itemName=AmazonWebServices.AWSToolkitforVisualStudio2022)
+3. Obtain AWS access keys: [guide here](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/keys-profiles-credentials.html).
+4. Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln) in Visual Studio and choose _View > AWS Explorer_ from the menu.
+5. You should be able to select a region and browse your AWS resources in the AWS Explorer window.  We will go over some of the features of the AWS Explorer at the start of this workshop
 
-Stage 3 adds an API Gateway service to the front of our system so song lyrics can be sent over HTTP to the songs bucket.  It also adds another AWS Lambda function that is used to save the lyrics file..  To deploy this stage to your AWS account:
+![](./guides/demonstration-aws-explorer.png)
 
+### Switching Branches
 
-### 1. Publish the solution
+There are three branches in this repository, each one represents an increasingly complex version of this serverless application.  All the infrastructure needed to run the application is configured in the [./serverless.template](./serverless.template) [SAM](https://aws.amazon.com/serverless/sam/) template. You deploy a version by checking out the relevant branch, right-clicking on the project name and selecting "Publish to AWS...".
 
-Right click the project name in Visual Studio and select "Publish to AWS Lambda..."
-
-![](./guides/demonstration-publish-context-menu.png)
-
-
-
-### 2. Grab the public url of the new API Gateway
-
-You can use this url to POST lyrics files to your S3 bucket and kick off the state machine from stage 2.
-
-![](./guides/demonstration-api-gateway.png)
-
-
-### 3. Test it out!
-
-a) Send a POST request to your `<gateway-url>` from step 2 above.  Upload a text file as the body of the POST request.  The following `curl` command will do this from the command line:
+To begin, switch to stage 1 and see the steps in this readme
 
 ```sh
-curl -X POST https://<gateway-url>/prod/test --upload-file C:\Temp\textfile.txt
+git switch stage-1
 ```
-
-b) Go to your static website and see your new file appear as a new song!  You can also look at the execution logs of your state machine in AWS Step Functions in the [management console](https://eu-west-1.console.aws.amazon.com/states/home)
