@@ -1,0 +1,38 @@
+{
+  "Comment": "Lyrics Website State Machine",
+  "StartAt": "Read lyrics from S3",
+  "States": {
+    "Read lyrics from S3": {
+      "Type": "Task",
+      "Resource": "${ReadLyricsFromS3Function.Arn}",
+      "Next": "Detect song language"
+    },
+    "Detect song language": {
+      "Type": "Task",
+      "Resource": "${DetectSongLanguageFunction.Arn}",
+      "Next": "Do we have a localised HTML template?"
+    },
+    "Do we have a localised HTML template?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.LanguageKey",
+          "StringEquals": "fr",
+          "Next": "Render in French"
+        }
+      ],
+      "Default": "Render in English"
+    },
+    "Render in English": {
+      "Type": "Task",
+      "Resource": "${RenderInEnglishFunction.Arn}",
+      "End": true
+    },
+    "Render in French": {
+      "Type": "Task",
+      "Resource": "${RenderInFrenchFunction.Arn}",
+      "End": true
+    }
+
+  }
+}

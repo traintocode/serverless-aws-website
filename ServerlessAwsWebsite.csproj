@@ -11,10 +11,14 @@
     <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="song.html" />
+    <None Remove="song.en.html" />
+    <None Remove="song.fr.html" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="song.html">
+    <Content Include="song.fr.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="song.en.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -22,6 +26,7 @@
     <PackageReference Include="Amazon.Lambda.Core" Version="2.1.0" />
     <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.3.0" />
     <PackageReference Include="Amazon.Lambda.S3Events" Version="3.0.0" />
+    <PackageReference Include="AWSSDK.Comprehend" Version="3.7.101.31" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.101.32" />
     <PackageReference Include="Scriban" Version="5.5.2" />
   </ItemGroup>

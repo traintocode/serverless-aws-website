@@ -6,6 +6,9 @@ using Amazon.S3.Util;
 using Scriban;
 using System.Text;
 using System.Web;
+using System.Text.Json;
+using Amazon.Comprehend;
+using Amazon.Comprehend.Model;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -28,19 +31,25 @@ public class LambdaFunctions
         PublicWebsiteUrl: Environment.GetEnvironmentVariable("PUBLIC_WEBSITE_URL")!
     );
 
+
     /// <summary>
-    /// The entry point to the AWS Lambda function (set in serverless.template)
+    /// Reads the body of the lyrics file from this S3 key and saves to the state object
     /// </summary>
-    public async Task<string> RenderHtml(S3Event @event, ILambdaContext context)
+    public async Task<StepFunctionsState> ReadLyricsFromS3(StepFunctionsState state, ILambdaContext context)
     {
-        var s3Event = @event.Records?[0].S3 ?? throw new ArgumentException("No S3 event!");
-        var objectKey = s3Event.Object.Key.Replace("+", " ");
+        context.Logger.LogInformation("Executing function...");
+        context.Logger.LogInformation(JsonSerializer.Serialize(state));
+
+        state.TriggeredS3Key = state.Detail?.Object?.Key ?? throw new ArgumentException("Missing S3 object key in state");
+
+
+        var objectKey = state.TriggeredS3Key.Replace("+", " ");
         var songTitle = objectKey.Replace(".txt", "", StringComparison.InvariantCultureIgnoreCase);
 
         // The event that triggered this lambda only contains the key, so go off and get the entire object...
         var s3GetResponse = await _s3Client.GetObjectAsync(new GetObjectRequest
         {
-            BucketName = s3Event.Bucket.Name,
+            BucketName = envVars.SongBucketName,
             Key = objectKey
         });
 
@@ -48,14 +57,69 @@ public class LambdaFunctions
         using var reader = new StreamReader(s3GetResponse.ResponseStream, Encoding.UTF8);
         var objectContentString = reader.ReadToEnd();
 
-        // See https://github.com/scriban/scriban for notes on template syntax in song.html
-        var template = Template.Parse(await File.ReadAllTextAsync("song.html"));
+        // Save the title and contents to the state object
+        state.SongTitle = songTitle;
+        state.SongLyrics = objectContentString;
+
+        return state;
+    }
+
+    /// <summary>
+    /// Uses AWS Comprehend to detect the language this song was written in
+    /// </summary>
+    public async Task<StepFunctionsState> DetectSongLanguage(StepFunctionsState state, ILambdaContext context)
+    {
+        var comprehendClient = new AmazonComprehendClient();
+
+        var detectDominantLanguageResponse = await comprehendClient.DetectDominantLanguageAsync(new DetectDominantLanguageRequest
+        {
+            Text = state.SongLyrics
+        });
+        foreach (var dl in detectDominantLanguageResponse.Languages)
+        {
+            context.Logger.LogInformation($"Language Code: {dl.LanguageCode}, Score: {dl.Score}");
+        }
+        var dominantLanguageKey = detectDominantLanguageResponse.Languages.Select(x => x.LanguageCode).First();
+
+        state.LanguageKey = dominantLanguageKey;
+
+        return state;
+    }
+
+    /// <summary>
+    /// Renders using the English language html template
+    /// </summary>
+    public async Task<StepFunctionsState> RenderInEnglish(StepFunctionsState state, ILambdaContext context)
+    {
+        await RenderHtml("song.en.html", new SongHtmlViewModel(state.SongLyrics!, state.SongTitle!), context.Logger.LogInformation);
+
+        return state;
+
+    }
+
+    /// <summary>
+    /// Renders using the French language html template
+    /// </summary>
+    public async Task<StepFunctionsState> RenderInFrench(StepFunctionsState state, ILambdaContext context)
+    {
+
+        await RenderHtml("song.fr.html", new SongHtmlViewModel(state.SongLyrics!, state.SongTitle!), context.Logger.LogInformation);
+
+        return state;
+
+    }
+
+    public record SongHtmlViewModel(string Lyrics, string Title);
+
+    public async Task RenderHtml(string templateFile, SongHtmlViewModel model, Action<string> log)
+    {
+        var template = Template.Parse(await File.ReadAllTextAsync(templateFile));
 
         // Render our (static) html page for this song
-        var songPageHtml = template.Render(new { Lyrics = objectContentString, Title = songTitle });
+        var songPageHtml = template.Render(model);
 
         // Save the rendered html page to the publicly facing html bucket
-        var htmlObjectKey = "Song/" + songTitle;
+        var htmlObjectKey = "Song/" + model.Title;
         await _s3Client.PutObjectAsync(new PutObjectRequest
         {
             BucketName = envVars.HtmlBucketName,
@@ -64,11 +128,10 @@ public class LambdaFunctions
             ContentType = "text/html"
         });
 
-        context.Logger.LogInformation($"Rendered and saved html page for S3 key {objectKey}");
-        context.Logger.LogInformation($"This page will be available at:");
-        context.Logger.LogInformation(Path.Join(envVars.PublicWebsiteUrl, HttpUtility.UrlPathEncode(htmlObjectKey)));
-        return "ok";
-
+        
+        log($"Rendered and saved html page for song {model.Title}");
+        log($"This page will be available at:");
+        log(Path.Join(envVars.PublicWebsiteUrl, HttpUtility.UrlPathEncode(htmlObjectKey)));
     }
 };
 

@@ -2,110 +2,55 @@
 
 Example website for a band called the See Sharps, built with C# on AWS.
 
-## Setup & Prerequisites
+## >>> This is Stage 2 <<<
 
-1. Register an account with AWS if you don't have one
-2. Download and install the [AWS Toolkit for Visual Studio](https://marketplace.visualstudio.com/items?itemName=AmazonWebServices.AWSToolkitforVisualStudio2022)
-3. Obtain AWS access keys: [guide here](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/keys-profiles-credentials.html).
-4. Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln) in Visual Studio and choose _View > AWS Explorer_ from the menu.
-5. You should be able to select a region and browse your AWS resources in the AWS Explorer window.  We will go over some of the features of the AWS Explorer at the start of this workshop
+To go back to stage 1 run `git switch stage-1`
 
-![](./guides/demonstration-aws-explorer.png)
-
-### Switching Branches
-
-There are three branches in this repository, each one represents an increasingly complex version of this serverless application.  All the infrastructure needed to run the application is configured in the [./serverless.template](./serverless.template) [SAM](https://aws.amazon.com/serverless/sam/) template. You deploy a version by checking out the relevant branch, right-clicking on the project name and selecting "Publish to AWS...".
+Stage 2 creates an AWS Step Functions state machine that detects the language of the song lyrics, then renders them to HTML using a different template for French and English songs..  To deploy this stage to your AWS account:
 
 
+### 1. First off, add this line to your aws-lambda-tools-defaults.json file:
 
-
-
-## >>> This is Stage 1 <<<
-
-This stage creates an AWS Lambda function that renders some song lyrics into an HTML web page, then saves it to a publicly facing S3 bucket.  To deploy this stage to your AWS account:
-
-
-### 1. First off, run this git command:
-```sh
-git update-index --skip-worktree aws-lambda-tools-defaults.json
+```json
+"template-substitutions": "$.Resources.StateMachine.Properties.DefinitionString.Fn::Sub=state-machine.json",
 ```
-This will allow you to make local changes to the [./aws-lambda-tools-defaults.json](./aws-lambda-tools-defaults.json) file that will persist when you switch branches later on.
+
+![](./guides/demonstration-add-appsetting.png)
+
+This template substitution allows us to define the state engine in a separate JSON file called [./state-machine.json](./state-machine.json) and bundle it into the SAM template on publish.
 
 
+### 2. Publish the solution
 
-### 2. Open the solution
-Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln)
-
-
-
-### 3. Start the Publish Wizard
 Right click the project name in Visual Studio and select "Publish to AWS Lambda..."
 
 ![](./guides/demonstration-publish-context-menu.png)
 
 
 
-### 4. Create a deployments bucket
+### 3. Wait 5 minutes after deployment
 
-This is an S3 bucket that the deployment tool will use to store your compiled code.  You should select "New..." and enter a unique name for your deployments bucket.  Ensure _Save settings to aws-lambda-tools-defaults.json_ is checked.
-![](./guides/demonstration-deployment-bucket.png)
-
-
-
-### 5. Enter names for your object buckets
-
-All S3 buckets in AWS need to have [globally unique names](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html), so enter names for the two S3 buckets you will be using for your application.  This can be anything you like.
-
-![](./guides/demonstration-data-buckets.png)
+After the CloudFormation stack has finished updating we will need to wait around 5 minutes for the EventBridge connection to come alive.  This is the connection that links the S3 bucket to the state machine.
 
 
 
-### 6. Click Publish!
+### 4. Test it out!
 
-When the wizard completes it will open a CloudFromation window that displays the status of your deployment.
+a) Upload one of the lyrics files from the [./sample-lyrics](./sample-lyrics) folder in this repository into the songs bucket (the one you created for `SongBucketName`).  There is a French song in this folder called [Les Zebres Dans La Savane.txt](./sample-lyrics/Les%20Zebres%20Dans%20La%20Savane.txt), try this one.
 
+b) Open the AWS Step Functions management console at this link: [https://eu-west-2.console.aws.amazon.com/states/home](https://eu-west-2.console.aws.amazon.com/states/home) (NOTE: if your state engine does not show up you may need to change the region in the top right)
 
+![](./guides/demonstration-aws-region.png)
 
-### 7. See your new S3 Buckets in the AWS Explorer
+e) Check that a new execution has happened and click it to explore the state machine path this execution took.
 
-Open the AWS Explorer window (_View > AWS Explorer_) and expand the **Amazon S3** node to see the new S3 buckets you defined in step 5.
-
-![](./guides/demonstration-aws-explorer-s3.png)
-
-
-
-### 8. Test it out!
-
-a) Open up the html bucket in AWS Explorer and right-click _Upload > File..._.  Then select [./index.html](./index.html) from the root of this repository.  This is the index html file of your static website.  
-
-![](./guides/demonstration-upload-index.png)
-
-You can check it works in the browser by selecting _Properties_ on the S3 bucket name and navigating to _Website_ and clicking on the public URL of your S3 bucket.
-
-![](./guides/demonstration-s3-public-url.png)
-
-
-b) Upload one of the lyrics files from the [./sample-lyrics](./sample-lyrics) folder in this repository into the other bucket - the one you created for `SongBucketName`.
-
-c) Expand the **AWS Lambda** node in the AWS Explorer tree and find your new lambda function.  It will have a name beginning with `ServerlessAwsWebsite-RenderHtml....`
-
-d) Check the _Logs_ tab of your lambda function to see if it executed
-
-![](./guides/testing-lambda-logs.png)
-
-e) The log message will have a public url you can visit to see the rendered HTML for your new page
-
-![](./guides/testing-public-html.png)
-
-f) You should also be able to see your new song in the list on the home page.  Open the url in step a) and refresh the page.  The new song will appear in the list here:
+f) Open the url for your web page.  The new song will appear in the list here:
 
 ![](./guides/demonstration-added-new-page.png)
 
 
 ## Troubleshooting
 
-#### Create failed because bucket name already exists?
+#### The state engine does not start an execution when I upload a file to the song bucket?
 
-![](./guides/troubleshooting-bucket-exists.png)
-
-Bucket names in S3 are globally unique, so you need to change this name in the Publish Wizard (step 5 above)
+Just wait a bit longer.  You can read more about how the S3 bucket triggers the AWS Step Functions via EventBridge on this page: [Starting a State Machine Execution in Response to Amazon S3 Events](https://docs.aws.amazon.com/step-functions/latest/dg/tutorial-cloudwatch-events-s3.html)

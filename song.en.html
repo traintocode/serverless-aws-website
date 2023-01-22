@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="http://serverless-aws-website.s3-website.eu-west-2.amazonaws.com/site.css" />
+</head>
+
+<body>
+    <main class="layout-main">
+        <header class="page-header" style="background: url('http://serverless-aws-website.s3-website.eu-west-2.amazonaws.com/uk-flag.png'); background-size: cover">
+            <div class="container flex">
+                <img src="http://serverless-aws-website.s3-website.eu-west-2.amazonaws.com/logo.png" />
+            </div>
+        </header>
+
+        <section class="container flex centered">
+            <h1>{{ title }}</h1>
+            <p class="lyrics-text">{{ lyrics }}</p>
+        </section>
+
+        <section class="container flex centered top-margin">
+            <a href="/">&lt; Back</a>
+        </section>
+    </main>
+
+    <footer class="layout-footer">
+        <div class="container">
+            &copy; 2023 - <a href="#">copyright</a>
+        </div>
+    </footer>
+
+</body>
+
+</html>

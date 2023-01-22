@@ -39,6 +39,11 @@
       "Properties": {
         "BucketName": {
           "Ref": "SongBucketName"
+        },
+        "NotificationConfiguration": {
+          "EventBridgeConfiguration": {
+            "EventBridgeEnabled": true
+          }
         }
       }
     },
@@ -54,30 +59,158 @@
         }
       }
     },
-    "RenderHtmlFunction": {
+    "ReadLyricsFromS3Function": {
       "Type": "AWS::Serverless::Function",
       "Properties": {
-        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::RenderHtml",
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::ReadLyricsFromS3",
+        "Runtime": "dotnet6",
+        "MemorySize": 256,
+        "Timeout": 30,
+        
+        "Policies": [
+          "AWSLambda_FullAccess",
+          "AmazonS3FullAccess"
+        ]
+      }
+    },
+    "DetectSongLanguageFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::DetectSongLanguage",
+        "Runtime": "dotnet6",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambda_FullAccess",
+          "ComprehendReadOnly"
+        ]
+      }
+    },
+    "RenderInEnglishFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::RenderInEnglish",
         "Runtime": "dotnet6",
         "MemorySize": 256,
         "Timeout": 30,
         "Policies": [
           "AWSLambda_FullAccess",
           "AmazonS3FullAccess"
-        ],
-        "Events": {
-          "NewSongInBucket": {
-            "Type": "S3",
-            "Properties": {
-              "Bucket": {
-                "Ref": "SongBucket"
-              },
-              "Events": [
-                "s3:ObjectCreated:*"
+        ]
+      }
+    },
+    "RenderInFrenchFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessAwsWebsite::ServerlessAwsWebsite.LambdaFunctions::RenderInFrench",
+        "Runtime": "dotnet6",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Policies": [
+          "AWSLambda_FullAccess",
+          "AmazonS3FullAccess"
+        ]
+      }
+    },
+    "StateMachine": {
+      "Type": "AWS::StepFunctions::StateMachine",
+      "Properties": {
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "StateMachineRole",
+            "Arn"
+          ]
+        },
+        "DefinitionString": {
+          "Fn::Sub": ""
+        }
+      }
+    },
+    "StateMachineS3Trigger": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Name": "StateMachineS3Trigger",
+        "EventPattern": {
+          "source": [
+            "aws.s3"
+          ],
+          "detail-type": [
+            "Object Created"
+          ],
+          "detail": {
+            "bucket": {
+              "name": [
+                {
+                  "Ref": "SongBucketName"
+                }
               ]
             }
           }
-        }
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Ref": "StateMachine"
+            },
+            "Id": "StateMachineS3TriggerTarget",
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "StateMachineRole",
+                "Arn"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "StateMachineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::Sub": "states.${AWS::Region}.amazonaws.com"
+                }
+              },
+              "Action": "sts:AssumeRole"
+            },
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::Sub": "events.amazonaws.com"
+                }
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+            "arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess",
+            "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "StepFunctionLambdaInvoke",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
       }
     },
     "HtmlBucketPolicy": {
