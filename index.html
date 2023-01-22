@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The See Sharps</title>
+    <link rel="stylesheet" href="http://serverless-aws-website.s3-website.eu-west-2.amazonaws.com/site.css" />
+</head>
+
+<body>
+    <main class="layout-main">
+        <header class="page-header">
+            <div class="container flex">
+                <img src="http://serverless-aws-website.s3-website.eu-west-2.amazonaws.com/logo.png" />
+            </div>
+        </header>
+        
+        
+        <section class="hero">
+            <div class="container flex album-container">
+                <div class="album-img-container">
+                    <img src="http://serverless-aws-website.s3-website.eu-west-2.amazonaws.com/album-cover.png" />
+                </div>
+                <aside class="album-aside">
+                    <h2>Album out now!</h2>
+                    <p>Buy the latest album from <strong>The See Sharps</strong>, you can find the lyrics for each song below.</p>
+                </aside>
+            </div>
+        </section>
+        
+        <section class="container flex padded">
+            <div class="song-list-heading">
+                <h3>Song List</h3>
+                <p class="subheading">Choose a song to see the lyrics</p>
+            </div>
+            <ul class="song-links" id="songListElement">
+            </ul>
+        </section>
+    </main>
+
+    <footer class="layout-footer">
+        <div class="container">
+            &copy; 2023 - <a href="#">copyright</a>
+        </div>
+    </footer>
+
+    <script>
+        const bucketListXmlUrl = `http://s3.eu-west-1.amazonaws.com/01-my-html-bucket/?list-type=2&max-keys=1000`;
+        async function loadSongList() {
+            const resp = await fetch(bucketListXmlUrl);
+            const xml = await resp.text();
+            const songListElement = document.getElementById("songListElement");
+            const parsed = new window.DOMParser().parseFromString(xml, "text/xml");
+            const contentsXmlNode = parsed.getElementsByTagName("Contents");
+            const bucketKeys = [...contentsXmlNode].map(x => x.getElementsByTagName("Key")[0].textContent);
+            for(let key of bucketKeys.filter(x => x.startsWith("Song/"))) {
+                const sects = key.split('/');
+                console.log(`Found song: ${sects[1]}`);
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.setAttribute("href", "/Song/" + encodeURIComponent(sects[1]));
+                a.innerText = sects[1];
+                li.appendChild(a);
+                songListElement.appendChild(li);
+            }
+        }
+        loadSongList();
+    </script>
+
+</body>
+
+</html>

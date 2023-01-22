@@ -12,9 +12,11 @@ Example website for a band called the See Sharps, built with C# on AWS.
 
 ![](./guides/demonstration-aws-explorer.png)
 
-## Switching Branches
+### Switching Branches
 
 There are three branches in this repository, each one represents an increasingly complex version of this serverless application.  All the infrastructure needed to run the application is configured in the [./serverless.template](./serverless.template) [SAM](https://aws.amazon.com/serverless/sam/) template. You deploy a version by checking out the relevant branch, right-clicking on the project name and selecting "Publish to AWS...".
+
+
 
 
 
@@ -22,24 +24,33 @@ There are three branches in this repository, each one represents an increasingly
 
 This stage creates an AWS Lambda function that renders some song lyrics into an HTML web page, then saves it to a publicly facing S3 bucket.  To deploy this stage to your AWS account:
 
+
 ### 1. First off, run this git command:
 ```sh
 git update-index --skip-worktree aws-lambda-tools-defaults.json
 ```
 This will allow you to make local changes to the [./aws-lambda-tools-defaults.json](./aws-lambda-tools-defaults.json) file that will persist when you switch branches later on.
 
+
+
 ### 2. Open the solution
 Open [./ServerlessAwsWebsite.sln](./ServerlessAwsWebsite.sln)
+
+
 
 ### 3. Start the Publish Wizard
 Right click the project name in Visual Studio and select "Publish to AWS Lambda..."
 
 ![](./guides/demonstration-publish-context-menu.png)
 
+
+
 ### 4. Create a deployments bucket
 
 This is an S3 bucket that the deployment tool will use to store your compiled code.  You should select "New..." and enter a unique name for your deployments bucket.  Ensure _Save settings to aws-lambda-tools-defaults.json_ is checked.
 ![](./guides/demonstration-deployment-bucket.png)
+
+
 
 ### 5. Enter names for your object buckets
 
@@ -47,9 +58,13 @@ All S3 buckets in AWS need to have [globally unique names](https://docs.aws.amaz
 
 ![](./guides/demonstration-data-buckets.png)
 
+
+
 ### 6. Click Publish!
 
 When the wizard completes it will open a CloudFromation window that displays the status of your deployment.
+
+
 
 ### 7. See your new S3 Buckets in the AWS Explorer
 
@@ -57,19 +72,35 @@ Open the AWS Explorer window (_View > AWS Explorer_) and expand the **Amazon S3*
 
 ![](./guides/demonstration-aws-explorer-s3.png)
 
+
+
 ### 8. Test it out!
 
-a) Upload one of the lyrics files from the [./sample-lyrics] in this repository into whichever bucket you created for `SongBucketName`.
+a) Open up the html bucket in AWS Explorer and right-click _Upload > File..._.  Then select [./index.html](./index.html) from the root of this repository.  This is the index html file of your static website.  
 
-b) Expand the **AWS Lambda** node in the AWS Explorer tree and find your new lambda function.  It will have a name beginning with `ServerlessAwsWebsite-RenderHtml....`
+![](./guides/demonstration-upload-index.png)
 
-c) Check the _Logs_ tab of your lambda function to see if it executed
+You can check it works in the browser by selecting _Properties_ on the S3 bucket name and navigating to _Website_ and clicking on the public URL of your S3 bucket.
+
+![](./guides/demonstration-s3-public-url.png)
+
+
+b) Upload one of the lyrics files from the [./sample-lyrics](./sample-lyrics) folder in this repository into the other bucket - the one you created for `SongBucketName`.
+
+c) Expand the **AWS Lambda** node in the AWS Explorer tree and find your new lambda function.  It will have a name beginning with `ServerlessAwsWebsite-RenderHtml....`
+
+d) Check the _Logs_ tab of your lambda function to see if it executed
 
 ![](./guides/testing-lambda-logs.png)
 
-d) The log message will have a public url you can visit to see the rendered HTML for your new page
+e) The log message will have a public url you can visit to see the rendered HTML for your new page
 
 ![](./guides/testing-public-html.png)
+
+f) You should also be able to see your new song in the list on the home page.  Open the url in step a) and refresh the page.  The new song will appear in the list here:
+
+![](./guides/demonstration-added-new-page.png)
+
 
 ## Troubleshooting
 
