@@ -46,7 +46,9 @@
     </footer>
 
     <script>
-        const bucketListXmlUrl = `http://s3.eu-west-1.amazonaws.com/01-my-html-bucket/?list-type=2&max-keys=1000`;
+        const [ bucketName, publicUrl, _ ] = window.location.hostname.split('.');
+        const region = publicUrl.replace('s3-website-', '');
+        const bucketListXmlUrl = `http://s3.${region}.amazonaws.com/${bucketName}/?list-type=2&max-keys=1000`;
         async function loadSongList() {
             const resp = await fetch(bucketListXmlUrl);
             const xml = await resp.text();
